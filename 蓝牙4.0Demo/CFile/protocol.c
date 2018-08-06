@@ -193,7 +193,7 @@ void ProtocolMessageParser(myProtocol *proto)
 	cJSON *root,*typ,*cmd;
 	root = cJSON_Parse(proto->json);
     
-    printf("我的测试===%s",proto->json);
+   // printf("我的测试===%s",proto->json);
     
 	if(root != NULL){
 		typ = cJSON_GetObjectItem(root,"typ");

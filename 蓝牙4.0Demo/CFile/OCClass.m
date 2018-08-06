@@ -18,21 +18,16 @@
 @implementation OCClass
 
 - (void)sayHello{
-    
-    NSLog(@"Hello from CPP");
     [[NSNotificationCenter defaultCenter] postNotificationName:@"PushMessage" object:nil];
 }
 
 - (void)blueTooth{
-    
     [[NSNotificationCenter defaultCenter] postNotificationName:@"ReceiveBluetooth" object:nil];
 }
 
 @end
 
 void objcSayHello(){
-
-    NSLog(@"hello from CPP");
     OCClass *obj = [[OCClass alloc]init];
     [obj sayHello];
 }
