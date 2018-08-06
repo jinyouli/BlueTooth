@@ -268,7 +268,7 @@ char* ProtocolVerify(const char *buf,unsigned short len,char *mac,char *defaultM
 	memcpy(&src[8],tmp1,4);
 	memcpy(&src[12],tmp2,4);
     
-    printf("%8X  ",crc1);
+   // printf("%8X  ",crc1);
     
 	if((protoStatus == STA_WAIT) || (protoStatus == STA_CONF)){
 		memset(key,0xff,16);
@@ -808,17 +808,19 @@ void cb_ProtoGetInput(void *p,myProtocol *proto)
 
 void cb_ProtoOutput(void *p,myProtocol *proto)
 {
-    cJSON *root = (cJSON *)p,*cnt,*snr;
+    cJSON *root = (cJSON *)p,*cnt,*snr,*rty;
     
     cnt = cJSON_GetObjectItem(root,"cnt");
     snr = cJSON_GetObjectItem(cnt,"snr");
+    rty = cJSON_GetObjectItem(cnt,"rty");
+    
     char msg[MSG_SIZE];
     sprintf(msg,"{\"typ\":\"res\",\"cmd\":\"4103\",\"rsc\":\"0\",\"cnt\":{\"snr\":\"%s\"}}",snr->valuestring);
     ProtocolPack(0x00,0x01,msg,NULL,0);
     
-    printf("蓝牙反馈获取到==%s",snr->valuestring);
+   // printf("蓝牙反馈获取到==%s,重发 == %d",snr->valuestring,rty->valueint);
     
-    objcReceiveBluetooth();
+    objcReceiveBluetooth(rty->valueint);
     
 //    if(protoStatus == STA_WORK){
 //        char id[9];

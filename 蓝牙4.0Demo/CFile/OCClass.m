@@ -21,8 +21,11 @@
     [[NSNotificationCenter defaultCenter] postNotificationName:@"PushMessage" object:nil];
 }
 
-- (void)blueTooth{
-    [[NSNotificationCenter defaultCenter] postNotificationName:@"ReceiveBluetooth" object:nil];
+- (void)blueTooth:(int)value{
+    
+    NSDictionary *dict = [[NSDictionary alloc] initWithObjectsAndKeys:[NSNumber numberWithInt:value],@"blueStatus", nil];
+    
+    [[NSNotificationCenter defaultCenter] postNotificationName:@"ReceiveBluetooth" object:dict];
 }
 
 @end
@@ -32,10 +35,10 @@ void objcSayHello(){
     [obj sayHello];
 }
 
-void objcReceiveBluetooth()
+void objcReceiveBluetooth(int status)
 {
     OCClass *obj = [[OCClass alloc]init];
-    [obj blueTooth];
+    [obj blueTooth:status];
 }
 
 

@@ -8,4 +8,4 @@
 
 void objcSayHello();
 
-void objcReceiveBluetooth();
+void objcReceiveBluetooth(int);

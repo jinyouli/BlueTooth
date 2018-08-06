@@ -68,7 +68,7 @@ static NSString * const kDescriptorUUID = @"2902";
     // 随机数响应
     [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(PushMessage) name:@"PushMessage" object:nil];
     // 蓝牙反馈回调
-    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(blueCallback) name:@"ReceiveBluetooth" object:nil];
+    [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(blueCallback:) name:@"ReceiveBluetooth" object:nil];
     
     // 解析初始化
     ProtocolInit();
@@ -108,9 +108,18 @@ static NSString * const kDescriptorUUID = @"2902";
 }
 
 // 蓝牙反馈回调
-- (void)blueCallback
+- (void)blueCallback:(NSNotification *)notif
 {
+    //蓝牙反馈状态，0为非重发，1为重发，默认为0
+    int blueStatus = [notif.object[@"blueStatus"] intValue];
+    NSLog(@"收到 == %d",blueStatus);
+    
     [self sendMessage];
+    
+    if (blueStatus == 0) {
+        UIAlertView *alertView = [[UIAlertView alloc] initWithTitle:@"提示" message:@"蓝牙开门成功" delegate:self cancelButtonTitle:@"确认" otherButtonTitles:nil, nil];
+        [alertView show];
+    }
     
     dispatch_after(dispatch_time(DISPATCH_TIME_NOW, (int64_t)(0.5 * NSEC_PER_SEC)), dispatch_get_main_queue(), ^{
         if (self.cbPeripheral) {
@@ -219,6 +228,7 @@ static NSString * const kDescriptorUUID = @"2902";
     });
 }
 
+// 分段发送
 - (void)sendMessage{
     if (self.characteristic) {
         
