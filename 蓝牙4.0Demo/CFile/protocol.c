@@ -32,7 +32,8 @@ uint32_t receiveTimeout = 0;
 
 protoStatusType protoStatus = STA_WAIT;
 
-char *protoDefaultKey = "1234567890123456";
+//char *protoDefaultKey = "1234567890123456";
+unsigned char protoDefaultKey[16] = {0xA1,0xC4,0xE0,0x60,0x8C,0xAB,0x0A,0x92,0x2C,0x24,0x51,0x58,0xBC,0x8F,0x9F,0x00};
 uint8_t protoKey[16];
 uint8_t protoTimer = 0;
 uint8_t protoCount = 0;
@@ -275,38 +276,38 @@ char* ProtocolVerify(const char *buf,unsigned short len,char *mac,char *defaultM
 		memcpy(key,protoKey,16);
 	}
     
-    printf("key == ");
-    for (int i=0; i<16; i++) {
-        printf("%02X ",key[i]);
-    }
-    printf("\n");
-
-    printf("src == ");
-    for (int i=0; i<16; i++) {
-        printf("%02X ",src[i]);
-    }
-    printf("\n");
+//    printf("key == ");
+//    for (int i=0; i<16; i++) {
+//        printf("%02X ",key[i]);
+//    }
+//    printf("\n");
+//
+//    printf("src == ");
+//    for (int i=0; i<16; i++) {
+//        printf("%02X ",src[i]);
+//    }
+//    printf("\n");
 	
 	mbedtls_aes_context ctx;
 	mbedtls_aes_init(&ctx);
 	mbedtls_aes_setkey_enc(&ctx,(const unsigned char*)key,128);
 	mbedtls_aes_crypt_ecb(&ctx,MBEDTLS_AES_ENCRYPT,src,enc);
 	
-    printf("enc1 == ");
-    for(i=0;i<16;i++){
-        printf("%02X  ",enc[i]);
-    }
-    printf("\n");
+//    printf("enc1 == ");
+//    for(i=0;i<16;i++){
+//        printf("%02X  ",enc[i]);
+//    }
+//    printf("\n");
     
 	for(i=0;i<4;i++){
 		mac[i] = enc[i] ^ enc[i+4] ^ enc[i+8] ^ enc[i+12];
 	}
 
-    printf("mac == ");
-    for(i=0;i<4;i++){
-        printf("%02X  ",mac[i]);
-    }
-    printf("\n");
+//    printf("mac == ");
+//    for(i=0;i<4;i++){
+//        printf("%02X  ",mac[i]);
+//    }
+//    printf("\n");
     
 	memset(key,0xff,16);
 	mbedtls_aes_free(&ctx);

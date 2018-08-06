@@ -50,6 +50,8 @@ static NSString * const kDescriptorUUID = @"2902";
 - (void)viewDidLoad {
     
     [super viewDidLoad];
+    
+    self.characteristic = nil;
     [self centralManager];
     self.peripheralText.hidden = YES;
     
@@ -170,9 +172,9 @@ static NSString * const kDescriptorUUID = @"2902";
         }
     }
     
-    if (self.cbPeripheral) {
-        [self.centralManager cancelPeripheralConnection:self.cbPeripheral];
-    }
+//    if (self.cbPeripheral) {
+//        [self.centralManager cancelPeripheralConnection:self.cbPeripheral];
+//    }
 }
 
 - (void)PushMessage
@@ -447,16 +449,13 @@ static NSString * const kDescriptorUUID = @"2902";
     // 遍历所有的服务
     for (CBService *service in peripheral.services)
     {
-        NSLog(@"发现的服务 == %@",service.UUID.UUIDString);
-        
-        [self showMessage:[NSString stringWithFormat:@"发现的服务 == %@",service.UUID.UUIDString]];
-        [peripheral discoverCharacteristics:nil forService:service];
-        
         // 获取对应的服务
         if ([service.UUID.UUIDString isEqualToString:kNotifyServerUUID])
         {
             // 根据服务去扫描特征
-            [peripheral discoverCharacteristics:nil forService:service];
+            NSLog(@"发现的服务 == %@",service.UUID.UUIDString);
+            [self showMessage:[NSString stringWithFormat:@"发现的服务 == %@",service.UUID.UUIDString]];
+            [peripheral discoverCharacteristics:@[[CBUUID UUIDWithString:kNotifyCharacteristicUUID]] forService:service];
         }
     }
 }
@@ -475,11 +474,17 @@ static NSString * const kDescriptorUUID = @"2902";
     {
         if ([characteristic.UUID.UUIDString isEqualToString:kNotifyCharacteristicUUID])
         {
-            NSLog(@"特征值:%@",characteristic.UUID.UUIDString);
             self.characteristic = characteristic;
-            [peripheral setNotifyValue:YES forCharacteristic:characteristic];
-            [peripheral discoverDescriptorsForCharacteristic:characteristic];
+            if (self.characteristic.properties & CBCharacteristicPropertyNotify) {
+                [peripheral setNotifyValue:YES forCharacteristic:self.characteristic];
+            }
+            
+            [peripheral discoverDescriptorsForCharacteristic:self.characteristic];
+            //[peripheral readValueForCharacteristic:characteristic];
+             NSLog(@"=====%@",@(self.characteristic.isNotifying));
         }
+        
+        
         
 //        if ([characteristic.UUID.UUIDString isEqualToString:kWriteCharacteristicUUID])
 //        {
@@ -495,6 +500,26 @@ static NSString * const kDescriptorUUID = @"2902";
     }
 }
 
+- (void)peripheral:(CBPeripheral *)peripheral didUpdateNotificationStateForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
+{
+    
+    if (error)
+    //此处一直报错：Error Domain=CBATTErrorDomain Code=6 "The request is not supported." UserInfo={NSLocalizedDescription=The request is not supported.
+        {
+            NSLog(@"Error changing notification state: %@", error.localizedDescription);
+        }
+        
+        if (characteristic.isNotifying)//全部是NO
+        {
+            NSLog(@"Notification began on %@", characteristic);
+            [peripheral readValueForCharacteristic:characteristic];
+        }
+        else
+        {
+            [self.centralManager cancelPeripheralConnection:self.cbPeripheral];
+        }
+    }
+
 - (void)peripheral:(CBPeripheral *)peripheral didDiscoverDescriptorsForCharacteristic:(CBCharacteristic *)characteristic error:(NSError *)error
 {
     for (CBDescriptor *d in characteristic.descriptors) {
@@ -502,10 +527,11 @@ static NSString * const kDescriptorUUID = @"2902";
         Byte bytes[]={0x01,0x00};
         //NSLog(@"详情 uuid == %@",d.UUID.UUIDString);
         
-        if ([d.UUID.UUIDString isEqualToString:kDescriptorUUID]) {
-//            [peripheral writeValue:[[NSData alloc] initWithBytes:bytes length:2] forCharacteristic:characteristic type:CBCharacteristicWriteWithoutResponse];
-        }
+//        [peripheral readValueForDescriptor:d];
         
+        if ([d.UUID.UUIDString isEqualToString:kDescriptorUUID]) {
+//            [peripheral writeValue:[[NSData alloc] initWithBytes:bytes length:16] forCharacteristic:characteristic type:CBCharacteristicWriteWithoutResponse];
+        }
     }
 }
 
@@ -524,6 +550,7 @@ static NSString * const kDescriptorUUID = @"2902";
  */
 - (void)peripheral:(CBPeripheral *)peripheral didUpdateValueForCharacteristic:(nonnull CBCharacteristic *)characteristic error:(nullable NSError *)error
 {
+    NSLog(@"错误 == %@",[NSString stringWithFormat:@"%@",error]);
     
    // protocolChangeStatus(STA_WAIT);
     Byte *testByte = (Byte *)[characteristic.value bytes];
@@ -544,6 +571,7 @@ static NSString * const kDescriptorUUID = @"2902";
     NSString * str = [[NSString alloc] initWithData:characteristic.value encoding:NSUTF8StringEncoding];
     [self showMessage:@"收到的数据"];
     [self showMessage:str];
+    NSLog(@"数据 == %@",str);
     
 //    if ([characteristic.UUID.UUIDString isEqualToString:kNotifyCharacteristicUUID])
 //    {
@@ -604,6 +632,40 @@ static NSString * const kDescriptorUUID = @"2902";
     [self.centralManager connectPeripheral:self.cbPeripheral options:nil];
 }
 
+-(void)logCharacteristicProperties:(CBCharacteristicProperties)properties {
+    
+    if (properties & CBCharacteristicPropertyBroadcast) {
+        NSLog(@"CBCharacteristicPropertyBroadcast");
+    }
+    if (properties & CBCharacteristicPropertyRead) {
+        NSLog(@"CBCharacteristicPropertyRead");
+    }
+    if (properties & CBCharacteristicPropertyWriteWithoutResponse) {
+        NSLog(@"CBCharacteristicPropertyWriteWithoutResponse");
+    }
+    if (properties & CBCharacteristicPropertyWrite) {
+        NSLog(@"CBCharacteristicPropertyWrite");
+    }
+    if (properties & CBCharacteristicPropertyNotify) {
+        NSLog(@"CBCharacteristicPropertyNotify");
+    }
+    if (properties & CBCharacteristicPropertyIndicate) {
+        NSLog(@"CBCharacteristicPropertyIndicate");
+    }
+    if (properties & CBCharacteristicPropertyAuthenticatedSignedWrites) {
+        NSLog(@"CBCharacteristicPropertyAuthenticatedSignedWrites");
+    }
+    if (properties & CBCharacteristicPropertyExtendedProperties) {
+        NSLog(@"CBCharacteristicPropertyExtendedProperties");
+    }
+    if (properties & CBCharacteristicPropertyNotifyEncryptionRequired) {
+        NSLog(@"CBCharacteristicPropertyNotifyEncryptionRequired");
+    }
+    if (properties & CBCharacteristicPropertyIndicateEncryptionRequired) {
+        NSLog(@"CBCharacteristicPropertyIndicateEncryptionRequired");
+    }
+}
+
 
 - (void)showMessage:(NSString *)message
 {
@@ -634,6 +696,7 @@ static NSString * const kDescriptorUUID = @"2902";
     [super didReceiveMemoryWarning];
     // Dispose of any resources that can be recreated.
 }
+
 
 
 @end
